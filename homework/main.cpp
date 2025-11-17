@@ -40,6 +40,7 @@ GameTimer gt;
 int num{};
 int method{};
 Color bg = beginConfig::bg;
+int xcnt{}, ycnt{};
 
 
 void main(int argc, char** argv)
@@ -61,7 +62,8 @@ void main(int argc, char** argv)
 		std::cout << "GLEW Initialized\n";
 	}
 	basic.CompileShader("basic.vs","basic.fs");
-
+	std::cout << "_*_ 개의 기둥들을 생성하시겠습니까? : ";
+	std::cin >> xcnt >> ycnt;
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);

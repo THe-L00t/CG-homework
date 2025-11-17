@@ -19,6 +19,9 @@
     <Filter Include="소스 파일\shader">
       <UniqueIdentifier>{a63d3260-ff38-471f-ae60-001de0f6e433}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\block">
+      <UniqueIdentifier>{6a22b7e6-efd1-4dea-8ec6-df567e8ab675}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -26,6 +29,9 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일\shaderObj</Filter>
+    </ClCompile>
+    <ClCompile Include="Block.cpp">
+      <Filter>소스 파일\block</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="gameTimer.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Block.h">
+      <Filter>소스 파일\block</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

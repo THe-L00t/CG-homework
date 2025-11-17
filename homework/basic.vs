@@ -1,1 +1,15 @@
-#pragma once
+#version 330 
+
+in vec3 a_Pos;
+in vec4 a_Color;
+
+out vec4 v_Color;
+
+
+void main()
+{
+	vec4 newPosition = projectionT * viewT * worldT * vec4(a_Pos,1);
+
+	gl_Position = newPosition;
+	v_Color = a_Color;
+}
