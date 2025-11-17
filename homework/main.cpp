@@ -1,5 +1,6 @@
-﻿#include "loadShader.hpp"
-#include "headheader.h"
+﻿#include "headheader.h"
+#include "shader.h"
+#include "gameTimer.h"
 
 namespace beginConfig {
 	int width{ 800 };
@@ -76,7 +77,7 @@ void main(int argc, char** argv)
 GLvoid drawScene()
 {
 
-	glClearColor(bg.r, bg.g, bg.b, bg.al);
+	glClearColor(bg.r, bg.g, bg.b, bg.a);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// 셰이더 사용하여 그리기
@@ -179,7 +180,7 @@ GLvoid Mouse(int button, int state, int x, int y)
 	}
 
 
-}o
+}
 
 GLvoid loop(int v)
 {

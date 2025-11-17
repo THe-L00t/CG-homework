@@ -21,7 +21,7 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="shader.cpp">
+    <ClCompile Include="Shader.cpp">
       <Filter>소스 파일\shaderObj</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,8 +29,11 @@
     <ClInclude Include="headHeader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="shader.h">
+    <ClInclude Include="Shader.h">
       <Filter>소스 파일\shaderObj</Filter>
+    </ClInclude>
+    <ClInclude Include="gameTimer.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
