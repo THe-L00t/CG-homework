@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <cmath>
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>

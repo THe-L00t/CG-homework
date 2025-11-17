@@ -1,6 +1,7 @@
-﻿#include "headheader.h"
+﻿#include "headHeader.h"
 #include "shader.h"
 #include "gameTimer.h"
+#include <algorithm>
 
 namespace beginConfig {
 	int width{ 800 };
@@ -47,6 +48,9 @@ int xcnt{}, ycnt{};
 #include "Block.h"
 std::vector<Block> blocks;
 
+// 투영 방식
+bool isPerspective = true;
+
 
 void main(int argc, char** argv)
 {
@@ -71,6 +75,12 @@ void main(int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 	std::cout << "Shader compiled successfully!" << std::endl;
+
+	std::cout << "\n===== 명령어 안내 =====\n";
+	std::cout << "o: 메인 뷰포트를 직각 투영으로 전환\n";
+	std::cout << "p: 메인 뷰포트를 원근 투영으로 전환\n";
+	std::cout << "q: 프로그램 종료\n";
+	std::cout << "=======================\n\n";
 
 	std::cout << "몇 x 몇 개의 기둥들을 생성하시겠습니까? (5~25): ";
 	std::cin >> xcnt >> ycnt;
@@ -152,10 +162,19 @@ GLvoid drawScene()
 	// ========== 메인 뷰 (전체 화면) ==========
 	glViewport(0, 0, windowWidth, windowHeight);
 
-	// 변환 행렬 설정 (원근 투영)
+	// 변환 행렬 설정
 	glm::mat4 world = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(CameraConfig::pos, CameraConfig::dir, CameraConfig::up);
-	glm::mat4 projection = glm::perspective(ViewfConfig::fovy, ViewfConfig::aspect, ViewfConfig::n, ViewfConfig::f);
+	glm::mat4 projection;
+
+	if (isPerspective)
+	{
+		projection = glm::perspective(ViewfConfig::fovy, ViewfConfig::aspect, ViewfConfig::n, ViewfConfig::f);
+	}
+	else
+	{
+		projection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 100.0f);
+	}
 
 	basic.setUniform("worldT", world);
 	basic.setUniform("viewT", view);
@@ -226,6 +245,14 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 
 	switch (key) {
+	case 'o':
+		isPerspective = false;
+		std::cout << "메인 뷰포트: 직각 투영으로 전환\n";
+		break;
+	case 'p':
+		isPerspective = true;
+		std::cout << "메인 뷰포트: 원근 투영으로 전환\n";
+		break;
 	case '1':
 
 		break;

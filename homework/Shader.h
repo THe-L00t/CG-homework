@@ -38,5 +38,4 @@ private:
 	GLuint program{};
 
 	void deleteShader();
-
 };
