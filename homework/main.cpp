@@ -5,7 +5,7 @@
 namespace beginConfig {
 	int width{ 800 };
 	int height{ 800 };
-	Color bg{ 1,1,1,1 };
+	Color bg{ 0.5f, 0.5f, 0.5f, 1.0f };  // 회색 배경
 }
 namespace CameraConfig {
 	glm::vec3 pos{ 5.f,5.f,-2.f };
@@ -43,6 +43,10 @@ int method{};
 Color bg = beginConfig::bg;
 int xcnt{}, ycnt{};
 
+// 블럭 관련
+#include "Block.h"
+std::vector<Block> blocks;
+
 
 void main(int argc, char** argv)
 {
@@ -68,20 +72,41 @@ void main(int argc, char** argv)
 	}
 	std::cout << "Shader compiled successfully!" << std::endl;
 
-	//std::cout << "_*_ 개의 기둥들을 생성하시겠습니까? : ";
-	//std::cin >> xcnt >> ycnt;
+	std::cout << "몇 x 몇 개의 기둥들을 생성하시겠습니까? (5~25): ";
+	std::cin >> xcnt >> ycnt;
+
+	// 입력 범위 제한
+	xcnt = std::max(5, std::min(25, xcnt));
+	ycnt = std::max(5, std::min(25, ycnt));
+	std::cout << "생성할 블럭: " << xcnt << " x " << ycnt << std::endl;
+
+	// 블럭 생성 (평면을 빈 공간 없이 꽉 채움)
+	float blockWidth = 4.0f / xcnt;   // X 방향 블럭 크기 (평면 가로 길이 / xcnt)
+	float blockDepth = 4.0f / ycnt;   // Z 방향 블럭 크기 (평면 세로 길이 / ycnt)
+	float startX = -2.0f + blockWidth / 2.0f;
+	float startZ = -2.0f + blockDepth / 2.0f;
+
+	for (int i = 0; i < xcnt; ++i) {
+		for (int j = 0; j < ycnt; ++j) {
+			float x = startX + i * blockWidth;
+			float z = startZ + j * blockDepth;
+			blocks.emplace_back(x, z, blockWidth, blockDepth);  // 간격 없이 꽉 채움
+		}
+	}
+
+	std::cout << "Total blocks created: " << blocks.size() << std::endl;
 
 	// 평면 정점 데이터 설정 (위치 3개 + 색상 4개 = 7개씩)
-	// 더 큰 평면으로 설정 (10x10 크기)
+	// 4x4 크기 평면 (-2 ~ 2), 흰색
 	Vertex = {
 		// 삼각형 1
-		-5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 왼쪽 뒤
-		 5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 뒤
-		 5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 앞
+		-2.0f, 0.0f, -2.0f,  1.0f, 1.0f, 1.0f, 1.0f,  // 왼쪽 뒤
+		 2.0f, 0.0f, -2.0f,  1.0f, 1.0f, 1.0f, 1.0f,  // 오른쪽 뒤
+		 2.0f, 0.0f,  2.0f,  1.0f, 1.0f, 1.0f, 1.0f,  // 오른쪽 앞
 		// 삼각형 2
-		-5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 왼쪽 뒤
-		 5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 앞
-		-5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f   // 왼쪽 앞
+		-2.0f, 0.0f, -2.0f,  1.0f, 1.0f, 1.0f, 1.0f,  // 왼쪽 뒤
+		 2.0f, 0.0f,  2.0f,  1.0f, 1.0f, 1.0f, 1.0f,  // 오른쪽 앞
+		-2.0f, 0.0f,  2.0f,  1.0f, 1.0f, 1.0f, 1.0f   // 왼쪽 앞
 	};
 
 	// VAO, VBO 설정
@@ -141,6 +166,14 @@ GLvoid drawScene()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	// 블럭들 그리기
+	glBindVertexArray(VAO);
+	for (auto& block : blocks) {
+		block.draw(VBO);
+		glDrawArrays(GL_TRIANGLES, 0, 30);
+	}
+	glBindVertexArray(0);
+
 	// ========== 미니맵 뷰 (오른쪽 상단, 직각 투영) ==========
 	int miniMapSize = static_cast<int>(windowWidth * 0.3f);
 	int miniMapX = windowWidth - miniMapSize;
@@ -154,7 +187,7 @@ GLvoid drawScene()
 		glm::vec3(0.0f, 0.0f, 0.0f),   // 보는 방향 (원점)
 		glm::vec3(0.0f, 0.0f, -1.0f)   // 업 벡터 (Z축 방향)
 	);
-	glm::mat4 orthoProjection = glm::ortho(-6.0f, 6.0f, -6.0f, 6.0f, 0.1f, 20.0f);
+	glm::mat4 orthoProjection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 20.0f);
 
 	basic.setUniform("worldT", world);
 	basic.setUniform("viewT", orthoView);
@@ -167,6 +200,14 @@ GLvoid drawScene()
 	// 평면 다시 그리기
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	// 블럭들 다시 그리기
+	glBindVertexArray(VAO);
+	for (auto& block : blocks) {
+		block.draw(VBO);
+		glDrawArrays(GL_TRIANGLES, 0, 30);
+	}
 	glBindVertexArray(0);
 
 	// 뷰포트 원래대로 복구
@@ -271,7 +312,10 @@ GLvoid loop(int v)
 {
 	gt.Update();
 
-
+	// 모든 블럭 업데이트
+	for (auto& block : blocks) {
+		block.update(gt.deltaTime);
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(1, loop, 1);
