@@ -30,12 +30,8 @@ GLvoid Mouse(int, int, int, int);
 GLvoid loop(int);
 
 
-GLuint CompileShaders(const std::string_view&, const std::string_view&);
-bool ReadFile(const std::string_view&, std::string*);
-void AddShader(GLuint, const std::string_view&, GLenum);
-
 // Shader 
-GLuint bs{};
+Shader basic{};
 GLuint VBO{};
 std::vector<float> Vertex{};
 
@@ -64,7 +60,8 @@ void main(int argc, char** argv)
 	else {
 		std::cout << "GLEW Initialized\n";
 	}
-	bs = CompileShaders("CG1-15.vs", "CG1-15.fs");
+	basic.CompileShader("basic.vs","basic.fs");
+
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
@@ -81,8 +78,7 @@ GLvoid drawScene()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// 셰이더 사용하여 그리기
-	GLuint shader = bs;
-	glUseProgram(shader);
+	basic.Use();
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -12,7 +12,7 @@ Shader::Shader(Shader&& other) noexcept
 
 Shader& Shader::operator=(Shader&& other) noexcept
 {
-	// TODO: 여기에 return 문을 삽입합니다.
+	return *this;
 }
 
 std::optional<std::string> Shader::LoadFile(const std::filesystem::path& path)
