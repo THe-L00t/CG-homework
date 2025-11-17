@@ -19,9 +19,11 @@ void Block::setRandomProperties()
 {
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> colorDist(0.2f, 0.9f);
-	static std::uniform_real_distribution<float> heightDist(0.5f, 2.0f);
-	static std::uniform_real_distribution<float> speedDist(0.3f, 1.5f);
+
+	std::uniform_real_distribution<float> colorDist(0.2f, 0.9f);
+	std::uniform_real_distribution<float> heightDist(0.5f, 2.0f);
+	std::uniform_real_distribution<float> speedDist(0.3f, 1.5f);
+	std::uniform_real_distribution<float> delayDist(0.0f, 8.0f);
 
 	baseR = colorDist(gen);
 	baseG = colorDist(gen);
@@ -42,21 +44,26 @@ void Block::setRandomProperties()
 	fallSpeed = 0.0f;
 	fallDuration = 5.0f;
 	fallTimer = 0.0f;
+	fallDelay = delayDist(gen);
 }
 
 void Block::update(float deltaT)
 {
 	if (!fallStarted)
 	{
-		isFalling = true;
-		fallStarted = true;
-		fallTimer = 0.0f;
+		fallDelay -= deltaT;
 		currentR = baseR;
 		currentG = baseG;
 		currentB = baseB;
-	}
 
-	if (isFalling)
+		if (fallDelay <= 0.0f)
+		{
+			isFalling = true;
+			fallStarted = true;
+			fallTimer = 0.0f;
+		}
+	}
+	else if (isFalling)
 	{
 		fallTimer += deltaT;
 

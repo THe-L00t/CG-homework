@@ -29,6 +29,7 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid RanColor(Color&);
 GLvoid Mouse(int, int, int, int);
 GLvoid loop(int);
+GLvoid initializeScene();
 
 
 // Shader
@@ -50,6 +51,13 @@ std::vector<Block> blocks;
 
 // 투영 방식
 bool isPerspective = true;
+
+// 카메라 이동 및 블럭 움직임 제어
+float cameraZ = 0.0f;
+bool blocksMoving = true;
+float cameraAngle = 0.0f;
+bool rotatingY = false;
+int rotationDirection = 0;
 
 
 void main(int argc, char** argv)
@@ -79,32 +87,16 @@ void main(int argc, char** argv)
 	std::cout << "\n===== 명령어 안내 =====\n";
 	std::cout << "o: 메인 뷰포트를 직각 투영으로 전환\n";
 	std::cout << "p: 메인 뷰포트를 원근 투영으로 전환\n";
+	std::cout << "z: 원근 투영 시 카메라 Z축 양의 방향으로 이동\n";
+	std::cout << "Z: 원근 투영 시 카메라 Z축 음의 방향으로 이동\n";
+	std::cout << "m: 블럭 움직임 토글 (정지/재생)\n";
+	std::cout << "y: 카메라 Y축 양의 방향으로 공전\n";
+	std::cout << "Y: 카메라 Y축 음의 방향으로 공전\n";
+	std::cout << "c: 초기화 및 재시작\n";
 	std::cout << "q: 프로그램 종료\n";
 	std::cout << "=======================\n\n";
 
-	std::cout << "몇 x 몇 개의 기둥들을 생성하시겠습니까? (5~25): ";
-	std::cin >> xcnt >> ycnt;
-
-	// 입력 범위 제한
-	xcnt = std::max(5, std::min(25, xcnt));
-	ycnt = std::max(5, std::min(25, ycnt));
-	std::cout << "생성할 블럭: " << xcnt << " x " << ycnt << std::endl;
-
-	// 블럭 생성 (평면을 빈 공간 없이 꽉 채움)
-	float blockWidth = 4.0f / xcnt;   // X 방향 블럭 크기 (평면 가로 길이 / xcnt)
-	float blockDepth = 4.0f / ycnt;   // Z 방향 블럭 크기 (평면 세로 길이 / ycnt)
-	float startX = -2.0f + blockWidth / 2.0f;
-	float startZ = -2.0f + blockDepth / 2.0f;
-
-	for (int i = 0; i < xcnt; ++i) {
-		for (int j = 0; j < ycnt; ++j) {
-			float x = startX + i * blockWidth;
-			float z = startZ + j * blockDepth;
-			blocks.emplace_back(x, z, blockWidth, blockDepth);  // 간격 없이 꽉 채움
-		}
-	}
-
-	std::cout << "Total blocks created: " << blocks.size() << std::endl;
+	initializeScene();
 
 	// 평면 정점 데이터 설정 (위치 3개 + 색상 4개 = 7개씩)
 	// 4x4 크기 평면 (-2 ~ 2), 흰색
@@ -164,7 +156,17 @@ GLvoid drawScene()
 
 	// 변환 행렬 설정
 	glm::mat4 world = glm::mat4(1.0f);
-	glm::mat4 view = glm::lookAt(CameraConfig::pos, CameraConfig::dir, CameraConfig::up);
+
+	// 카메라 위치 계산 (Y축 공전 + Z축 이동)
+	glm::vec3 cameraPos = CameraConfig::pos;
+	cameraPos.z += cameraZ;
+
+	// Y축 공전 적용
+	float radius = glm::length(glm::vec2(cameraPos.x, cameraPos.z));
+	cameraPos.x = radius * cos(cameraAngle);
+	cameraPos.z = radius * sin(cameraAngle) + cameraZ;
+
+	glm::mat4 view = glm::lookAt(cameraPos, CameraConfig::dir, CameraConfig::up);
 	glm::mat4 projection;
 
 	if (isPerspective)
@@ -253,6 +255,50 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		isPerspective = true;
 		std::cout << "메인 뷰포트: 원근 투영으로 전환\n";
 		break;
+	case 'z':
+		if (isPerspective)
+		{
+			cameraZ += 0.5f;
+			std::cout << "카메라 Z축 이동: " << cameraZ << "\n";
+		}
+		break;
+	case 'Z':
+		if (isPerspective)
+		{
+			cameraZ -= 0.5f;
+			std::cout << "카메라 Z축 이동: " << cameraZ << "\n";
+		}
+		break;
+	case 'm':
+		blocksMoving = !blocksMoving;
+		std::cout << "블럭 움직임: " << (blocksMoving ? "재생" : "정지") << "\n";
+		break;
+	case 'y':
+		if (rotatingY && rotationDirection == 1)
+		{
+			rotatingY = false;
+			std::cout << "카메라 Y축 공전 정지\n";
+		}
+		else
+		{
+			rotatingY = true;
+			rotationDirection = 1;
+			std::cout << "카메라 Y축 양의 방향 공전 시작\n";
+		}
+		break;
+	case 'Y':
+		if (rotatingY && rotationDirection == -1)
+		{
+			rotatingY = false;
+			std::cout << "카메라 Y축 공전 정지\n";
+		}
+		else
+		{
+			rotatingY = true;
+			rotationDirection = -1;
+			std::cout << "카메라 Y축 음의 방향 공전 시작\n";
+		}
+		break;
 	case '1':
 
 		break;
@@ -284,7 +330,9 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 		break;
 	case 'c':
-
+		std::cout << "\n=== 초기화 시작 ===\n";
+		initializeScene();
+		std::cout << "=== 초기화 완료 ===\n";
 		break;
 	case 't':
 
@@ -339,11 +387,71 @@ GLvoid loop(int v)
 {
 	gt.Update();
 
-	// 모든 블럭 업데이트
-	for (auto& block : blocks) {
-		block.update(gt.deltaTime);
+	// Y축 공전 처리
+	if (rotatingY)
+	{
+		cameraAngle += rotationDirection * gt.deltaTime * 1.0f;
+	}
+
+	// 블럭 움직임이 활성화된 경우에만 업데이트
+	if (blocksMoving)
+	{
+		for (auto& block : blocks)
+		{
+			block.update(gt.deltaTime);
+		}
 	}
 
 	glutPostRedisplay();
 	glutTimerFunc(1, loop, 1);
+}
+
+GLvoid initializeScene()
+{
+	int newXcnt, newYcnt;
+
+	std::cout << "\n몇 x 몇 개의 기둥들을 생성하시겠습니까? (5~25): ";
+	std::cout.flush();
+
+	if (std::cin >> newXcnt >> newYcnt)
+	{
+		xcnt = std::max(5, std::min(25, newXcnt));
+		ycnt = std::max(5, std::min(25, newYcnt));
+	}
+	else
+	{
+		std::cin.clear();
+		std::cin.ignore(10000, '\n');
+		std::cout << "잘못된 입력입니다. 기본값 10x10 사용\n";
+		xcnt = 10;
+		ycnt = 10;
+	}
+
+	std::cout << "생성할 블럭: " << xcnt << " x " << ycnt << std::endl;
+
+	blocks.clear();
+
+	float blockWidth = 4.0f / xcnt;
+	float blockDepth = 4.0f / ycnt;
+	float startX = -2.0f + blockWidth / 2.0f;
+	float startZ = -2.0f + blockDepth / 2.0f;
+
+	for (int i = 0; i < xcnt; ++i)
+	{
+		for (int j = 0; j < ycnt; ++j)
+		{
+			float x = startX + i * blockWidth;
+			float z = startZ + j * blockDepth;
+			blocks.emplace_back(x, z, blockWidth, blockDepth);
+		}
+	}
+
+	isPerspective = true;
+	cameraZ = 0.0f;
+	blocksMoving = true;
+	cameraAngle = 0.0f;
+	rotatingY = false;
+	rotationDirection = 0;
+
+	std::cout << "총 블럭 생성: " << blocks.size() << "개\n";
 }

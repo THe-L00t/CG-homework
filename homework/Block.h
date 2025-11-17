@@ -40,6 +40,7 @@ private:
 	float fallDuration{ 2.0f };  // 낙하 시간 (2초로 늘림)
 	float fallTimer{ 0.0f };  // 경과 시간
 	float startFallY{ 10.0f };  // 시작 높이
+	float fallDelay{ 0.0f };  // 낙하 시작 지연 시간
 
 	// 색상 관련
 	float baseR{}, baseG{}, baseB{};  // 기본 색상
