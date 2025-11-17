@@ -1,4 +1,4 @@
-#include "Shader.h"
+﻿#include "Shader.h"
 
 Shader::~Shader()
 {
@@ -48,7 +48,7 @@ GLuint Shader::AddShader(const std::string_view& src, GLenum type)
 		GLint logLength;
 		glGetShaderiv(shaderObj, GL_INFO_LOG_LENGTH, &logLength);
 
-		// �α� ũ�⸸ŭ ���� �Ҵ� (��Ȯ�� ũ��)
+		// �α� ũ�⸸ŭ ���� �Ҵ� (��Ȯ�� ũ��)
 		std::vector<GLchar> infoLog(logLength);
 		glGetShaderInfoLog(shaderObj, logLength, nullptr, infoLog.data());
 
@@ -93,10 +93,15 @@ bool Shader::CompileShader(const std::filesystem::path& vsPath, const std::files
 		return false;
 	}
 
+	program = glCreateProgram();
 	glAttachShader(program, vs);
 	glAttachShader(program, fs);
 
 	glLinkProgram(program);
+
+	// 셰이더 객체 삭제 (프로그램에 링크된 후에는 필요 없음)
+	glDeleteShader(vs);
+	glDeleteShader(fs);
 
 	GLint success;
 	glGetProgramiv(program, GL_LINK_STATUS, &success);

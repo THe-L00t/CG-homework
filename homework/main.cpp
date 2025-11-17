@@ -30,8 +30,9 @@ GLvoid Mouse(int, int, int, int);
 GLvoid loop(int);
 
 
-// Shader 
+// Shader
 Shader basic{};
+GLuint VAO{};
 GLuint VBO{};
 std::vector<float> Vertex{};
 
@@ -61,9 +62,47 @@ void main(int argc, char** argv)
 	else {
 		std::cout << "GLEW Initialized\n";
 	}
-	basic.CompileShader("basic.vs","basic.fs");
-	std::cout << "_*_ 개의 기둥들을 생성하시겠습니까? : ";
-	std::cin >> xcnt >> ycnt;
+	if (!basic.CompileShader("basic.vs","basic.fs")) {
+		std::cerr << "Shader compilation failed!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::cout << "Shader compiled successfully!" << std::endl;
+
+	//std::cout << "_*_ 개의 기둥들을 생성하시겠습니까? : ";
+	//std::cin >> xcnt >> ycnt;
+
+	// 평면 정점 데이터 설정 (위치 3개 + 색상 4개 = 7개씩)
+	// 더 큰 평면으로 설정 (10x10 크기)
+	Vertex = {
+		// 삼각형 1
+		-5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 왼쪽 뒤
+		 5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 뒤
+		 5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 앞
+		// 삼각형 2
+		-5.0f, 0.0f, -5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 왼쪽 뒤
+		 5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f,  // 오른쪽 앞
+		-5.0f, 0.0f,  5.0f,  0.7f, 0.7f, 0.7f, 1.0f   // 왼쪽 앞
+	};
+
+	// VAO, VBO 설정
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, Vertex.size() * sizeof(float), Vertex.data(), GL_STATIC_DRAW);
+
+	// 위치 속성 (location = 0)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// 색상 속성 (location = 1)
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+
+	std::cout << "VAO/VBO setup complete!" << std::endl;
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
@@ -75,15 +114,63 @@ void main(int argc, char** argv)
 
 GLvoid drawScene()
 {
-
 	glClearColor(bg.r, bg.g, bg.b, bg.a);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 
-	// 셰이더 사용하여 그리기
+	// 셰이더 사용
 	basic.Use();
 
+	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
+	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// ========== 메인 뷰 (전체 화면) ==========
+	glViewport(0, 0, windowWidth, windowHeight);
+
+	// 변환 행렬 설정 (원근 투영)
+	glm::mat4 world = glm::mat4(1.0f);
+	glm::mat4 view = glm::lookAt(CameraConfig::pos, CameraConfig::dir, CameraConfig::up);
+	glm::mat4 projection = glm::perspective(ViewfConfig::fovy, ViewfConfig::aspect, ViewfConfig::n, ViewfConfig::f);
+
+	basic.setUniform("worldT", world);
+	basic.setUniform("viewT", view);
+	basic.setUniform("projectionT", projection);
+
+	// 평면 그리기
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	// ========== 미니맵 뷰 (오른쪽 상단, 직각 투영) ==========
+	int miniMapSize = static_cast<int>(windowWidth * 0.3f);
+	int miniMapX = windowWidth - miniMapSize;
+	int miniMapY = windowHeight - miniMapSize;
+
+	glViewport(miniMapX, miniMapY, miniMapSize, miniMapSize);
+
+	// 위에서 내려다보는 직각 투영 설정
+	glm::mat4 orthoView = glm::lookAt(
+		glm::vec3(0.0f, 10.0f, 0.0f),  // 카메라 위치 (위에서)
+		glm::vec3(0.0f, 0.0f, 0.0f),   // 보는 방향 (원점)
+		glm::vec3(0.0f, 0.0f, -1.0f)   // 업 벡터 (Z축 방향)
+	);
+	glm::mat4 orthoProjection = glm::ortho(-6.0f, 6.0f, -6.0f, 6.0f, 0.1f, 20.0f);
+
+	basic.setUniform("worldT", world);
+	basic.setUniform("viewT", orthoView);
+	basic.setUniform("projectionT", orthoProjection);
+
+	// 미니맵에 테두리 효과 (검은색 배경)
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	// 평면 다시 그리기
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	// 뷰포트 원래대로 복구
+	glViewport(0, 0, windowWidth, windowHeight);
 
 	glutSwapBuffers();
 }
