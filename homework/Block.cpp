@@ -21,7 +21,8 @@ void Block::setRandomProperties()
 	static std::mt19937 gen(rd());
 
 	std::uniform_real_distribution<float> colorDist(0.2f, 0.9f);
-	std::uniform_real_distribution<float> heightDist(0.5f, 2.0f);
+	std::uniform_real_distribution<float> minHeightDist(0.05f, 0.5f);
+	std::uniform_real_distribution<float> heightDist(0.5f, 2.5f);
 	std::uniform_real_distribution<float> speedDist(0.3f, 1.5f);
 	std::uniform_real_distribution<float> delayDist(0.0f, 8.0f);
 
@@ -29,7 +30,7 @@ void Block::setRandomProperties()
 	baseG = colorDist(gen);
 	baseB = colorDist(gen);
 
-	minH = 0.0f;
+	minH = minHeightDist(gen);
 	maxH = heightDist(gen);
 	height = minH;
 
@@ -48,6 +49,11 @@ void Block::setRandomProperties()
 }
 
 void Block::update(float deltaT)
+{
+	update(deltaT, 1.0f);
+}
+
+void Block::update(float deltaT, float speedMultiplier)
 {
 	if (!fallStarted)
 	{
@@ -87,7 +93,7 @@ void Block::update(float deltaT)
 	}
 	else
 	{
-		height += hDir * deltaT * speed;
+		height += hDir * deltaT * speed * speedMultiplier;
 
 		if (height > maxH)
 		{
@@ -123,6 +129,12 @@ void Block::updateVertexColors()
 		vertex[i + 5] = currentB;
 		vertex[i + 6] = 1.0f;
 	}
+}
+
+void Block::updateVertex()
+{
+	vertex.clear();
+	createVertex();
 }
 
 void Block::draw(GLuint VBO)

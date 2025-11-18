@@ -16,8 +16,14 @@ public:
 	Block(float, float, float, float);
 
 	void update(float);
+	void update(float, float);  // deltaTime, speedMultiplier
 	void draw(GLuint);
 	void setRandomProperties();
+	void updateVertex();  // vertex 갱신만 하는 함수
+
+	bool isRemoved{ false };  // 미로 생성 시 제거된 블럭
+	float height{};
+	float minH{};
 
 private:
 	void createVertex();
@@ -26,8 +32,7 @@ private:
 	float x{}, z{};
 	float xSize{}, zSize{};
 
-	float height{};
-	float maxH{}, minH{};
+	float maxH{};
 	float hDir{ 1.0f }, speed{};
 
 	bool isVisible{ true };
